@@ -1,21 +1,12 @@
+post_build:
+  commands:
+    - echo Push image to ECR
+    - docker push 732203471303.dkr.ecr.ap-south-1.amazonaws.com/migration-demo:latest
 
-version: 0.2
+    # ECS deploy
+    - aws ecs update-service --cluster migration-cluster --service migration-demo-service --force-new-deployment
 
-phases:
-  pre_build:
-    commands:
-      - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 732203471303.dkr.ecr.ap-south-1.amazonaws.com
-
-  build:
-    commands:
-      - echo Build Docker image
-      - docker build -t migration-demo .
-      - docker tag migration-demo:latest 732203471303.dkr.ecr.ap-south-1.amazonaws.com/migration-demo:latest
-
-  post_build:
-    commands:
-      - echo Push image to ECR
-      - docker push 732203471303.dkr.ecr.ap-south-1.amazonaws.com/migration-demo:latest
-      - echo Update ECS service
-      - aws ecs update-service --cluster migration-cluster --service migration-demo-service --force-new-deployment
+    # EKS deploy
+    - aws eks update-kubeconfig --region ap-south-1 --name <your-eks-cluster>
+    - kubectl apply -f deployment.yaml
+    - kubectl apply -f service.yaml
